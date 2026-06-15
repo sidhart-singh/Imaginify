@@ -32,7 +32,7 @@ const MediaUploader = ({
     }));
     onValueChange(result?.info?.public_id);
 
-    toast("Something went wrong while uploading", {
+    toast.success("Image was successfully uploaded", {
       description: "1 credit deducted",
       duration: 5000,
       className: "success-toast",
@@ -40,7 +40,7 @@ const MediaUploader = ({
   };
 
   const onUploadErrorHandler = () => {
-    toast("Something went wrong while uploading", {
+    toast.error("Something went wrong while uploading", {
       description: "Please try again",
       duration: 5000,
       className: "error-toast",
