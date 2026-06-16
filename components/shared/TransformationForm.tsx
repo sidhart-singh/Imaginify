@@ -22,12 +22,16 @@ import {
 import { CustomField } from "./CustomField";
 import { AspectRatioKey, debounce, deepMergeObjects } from "@/lib/utils";
 import { Button } from "../ui/button";
-import { Form } from "../ui/form";
+import { Form, FormControl } from "../ui/form";
 import { useForm } from "react-hook-form";
 import { HeartIcon } from "lucide-react";
 import MediaUploader from "./MediaUploader";
 import TransformedImage from "./TransformedImage";
 import { updateCredits } from "@/lib/actions/user.actions";
+import { getCldImageUrl } from "next-cloudinary";
+import { Value } from "@radix-ui/react-select";
+import { addImage, updateImage } from "@/lib/actions/image.actions";
+import { useRouter } from "next/navigation";
 
 export const formSchema = z.object({
   title: z.string(),
@@ -65,15 +69,69 @@ const TransformationForm = ({
   const [isTransforming, setIsTransforming] = useState(false);
   const [transformationConfig, setTransformationConfig] = useState(config);
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: initialValues,
   });
 
-  function onSubmit(data: z.infer<typeof formSchema>) {
-    console.log(data);
-  }
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    console.log(values);
+    setIsSubmitting(true);
+
+    if (data || image) {
+      const transformationUrl = getCldImageUrl({
+        width: image?.width,
+        height: image?.height,
+        src: image?.publicId,
+        ...transformationConfig,
+      });
+
+      const imageData = {
+        title: values?.title,
+        publicId: image?.publicId,
+        transformationType: type,
+        width: image?.width,
+        height: image?.height,
+        config: transformationConfig,
+        secureURL: image?.scureUrl,
+        transformationURL: image?.transformationUrl,
+        aspectRatio: values.aspectRatio,
+        prompt: values.prompt,
+        color: values.color,
+      };
+
+      if (action === "Add") {
+        try {
+          const newImage = await addImage({
+            image: imageData,
+            userId,
+            path: "/",
+          });
+          if (newImage) {
+            form.reset();
+            setImage(data);
+            router.push(`/transformations/${newImage._id}`);
+          }
+        } catch (error) {}
+      }
+
+      if (action === "Update") {
+        try {
+          const updatedImage = await updateImage({
+            image: { ...imageData, _id: data._id },
+            userId,
+            path: `/transformations/${data._id}`,
+          });
+          if (updatedImage) {
+            router.push("/transformations/${updatedImage._id}");
+          }
+        } catch (error) {}
+      }
+    }
+    setIsSubmitting(false);
+  };
 
   const onSelectFieldHandler = (
     value: string,
@@ -148,9 +206,11 @@ const TransformationForm = ({
                     onSelectFieldHandler(value, field.onChange)
                   }
                 >
-                  <SelectTrigger className="select-field">
-                    <SelectValue placeholder="Select size" />
-                  </SelectTrigger>
+                  <FormControl>
+                    <SelectTrigger className="select-field">
+                      <SelectValue placeholder="Select size" />
+                    </SelectTrigger>
+                  </FormControl>
                   <SelectContent>
                     {Object.keys(aspectRatioOptions).map((key) => (
                       <SelectItem key={key} value={key} className="select-item">
@@ -174,6 +234,7 @@ const TransformationForm = ({
                 className="w-full"
                 render={({ field }) => (
                   <Input
+                    {...field}
                     value={field.value}
                     className="input-field"
                     onChange={(e) =>
@@ -195,6 +256,7 @@ const TransformationForm = ({
                   className="w-full"
                   render={({ field }) => (
                     <Input
+                      {...field}
                       value={field.value}
                       className="input-field"
                       onChange={(e) =>
