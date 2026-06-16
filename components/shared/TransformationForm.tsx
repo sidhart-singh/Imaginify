@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
+import React, { useEffect, useState, useTransition } from "react";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -8,14 +8,13 @@ import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import {
   aspectRatioOptions,
+  creditFee,
   defaultValues,
   transformationTypes,
 } from "@/app/constants";
@@ -24,14 +23,13 @@ import { AspectRatioKey, debounce, deepMergeObjects } from "@/lib/utils";
 import { Button } from "../ui/button";
 import { Form, FormControl } from "../ui/form";
 import { useForm } from "react-hook-form";
-import { HeartIcon } from "lucide-react";
 import MediaUploader from "./MediaUploader";
 import TransformedImage from "./TransformedImage";
 import { updateCredits } from "@/lib/actions/user.actions";
 import { getCldImageUrl } from "next-cloudinary";
-import { Value } from "@radix-ui/react-select";
 import { addImage, updateImage } from "@/lib/actions/image.actions";
 import { useRouter } from "next/navigation";
+import { InsufficientCreditsModal } from "./InsufficientCreditsModal";
 
 export const formSchema = z.object({
   title: z.string(),
@@ -182,9 +180,16 @@ const TransformationForm = ({
     });
   };
 
+  useEffect(() => {
+    if(image && (type === 'restore' || type === 'removeBackground')){
+      setNewTransformation(transformationType.config)
+    }
+  }, [image, transformationType.config, type]);
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
+        {creditBalance < Math.abs(creditFee) && <InsufficientCreditsModal />}
         <div className="flex flex-col gap-4">
           <CustomField
             control={form.control}
