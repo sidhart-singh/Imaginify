@@ -95,8 +95,8 @@ const TransformationForm = ({
         width: image?.width,
         height: image?.height,
         config: transformationConfig,
-        secureURL: image?.scureUrl,
-        transformationURL: image?.transformationUrl,
+        secureUrl: image?.secureUrl,
+        transformationUrl: transformationUrl,
         aspectRatio: values.aspectRatio,
         prompt: values.prompt,
         color: values.color,
@@ -125,7 +125,7 @@ const TransformationForm = ({
             path: `/transformations/${data._id}`,
           });
           if (updatedImage) {
-            router.push("/transformations/${updatedImage._id}");
+            router.push(`/transformations/${updatedImage._id}`);
           }
         } catch (error) {}
       }

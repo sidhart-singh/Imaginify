@@ -1,5 +1,4 @@
 import { getImageSize, dataUrl, debounce } from "@/lib/utils";
-import { Dice1 } from "lucide-react";
 import { CldImage } from "next-cloudinary";
 import { PlaceholderValue } from "next/dist/shared/lib/get-img-props";
 import Image from "next/image";
